@@ -16,15 +16,16 @@ while True:
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
-    #Mess around with the value of this or preprocess the img more
-    eyes = eye_cascade.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
-
 
     for (x, y, w, h) in faces:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-    for (x, y, w, h) in eyes:
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        faceROI = gray[y:y + h, x:x + w]
+        eyes = eye_cascade.detectMultiScale(faceROI, scaleFactor=1.3, minNeighbors=5)
+        for (x2, y2, w2, h2) in eyes:
+            eye_center = (x + x2 + w2 // 2, y + y2 + h2 // 2)
+            radius = int(round((w2 + h2) * 0.25))
+            frame = cv2.circle(frame, eye_center, radius, (255, 0, 0), 4)
 
     cv2.imshow('Live Feed', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
