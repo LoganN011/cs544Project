@@ -32,6 +32,13 @@ def recognize_users():
     resnet = InceptionResnetV1(pretrained=None).eval()
     weights_path = get_resource_path(os.path.join('models', 'vggface2.pt'))
     
+    if not os.path.exists(weights_path):
+        import urllib.request
+        print(f"Downloading vggface2.pt to {weights_path}...")
+        os.makedirs(os.path.dirname(weights_path), exist_ok=True)
+        url = 'https://github.com/timesler/facenet-pytorch/releases/download/v2.2.9/20180402-114759-vggface2.pt'
+        urllib.request.urlretrieve(url, weights_path)
+    
     # Strip logits if they exist so it matches the expected model architecture
     state_dict = torch.load(weights_path, map_location=device)
     state_dict = {k: v for k, v in state_dict.items() if 'logits' not in k}
