@@ -35,13 +35,27 @@ class LivenessDetector:
         self.ear_threshold = ear_threshold
         self.frames_to_blink = frames_to_blink
         
-        self.mp_face_mesh = mp.solutions.face_mesh
-        self.face_mesh = self.mp_face_mesh.FaceMesh(
-            max_num_faces=1,
-            refine_landmarks=True,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5
-        )
+        from mediapipe.tasks import python
+        from mediapipe.tasks.python import vision
+        import os
+
+        # Check if model downloaded, otherwise download it
+        model_path = 'face_landmarker.task'
+        if not os.path.exists(model_path):
+            import urllib.request
+            url = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task'
+            print("Downloading face_landmarker model...")
+            urllib.request.urlretrieve(url, model_path)
+            
+        base_options = python.BaseOptions(model_asset_path=model_path)
+        options = vision.FaceLandmarkerOptions(base_options=base_options,
+                                               output_face_blendshapes=False,
+                                               output_facial_transformation_matrixes=False,
+                                               num_faces=1,
+                                               min_face_detection_confidence=0.5,
+                                               min_face_presence_confidence=0.5,
+                                               min_tracking_confidence=0.5)
+        self.face_landmarker = vision.FaceLandmarker.create_from_options(options)
         
         self.blink_counters = {} # Maps user/face ID to consecutive frames eye is closed
         self.liveness_state = {} # True if the user successfully blinked
@@ -54,7 +68,8 @@ class LivenessDetector:
         import math
         # Convert BGR to RGB since Mediapipe uses RGB
         img_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = self.face_mesh.process(img_rgb)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
+        results = self.face_landmarker.detect(mp_image)
         
         if user_name not in self.blink_counters:
             self.blink_counters[user_name] = 0
@@ -64,13 +79,13 @@ class LivenessDetector:
         if self.liveness_state[user_name]:
             return True, None
 
-        if results.multi_face_landmarks:
-            for face_landmarks in results.multi_face_landmarks:
+        if results.face_landmarks:
+            for face_landmarks in results.face_landmarks:
                 h, w, _ = frame.shape
                 
                 # Get the eye landmarks
-                left_eye_points = [face_landmarks.landmark[p] for p in LEFT_EYE_INDICES]
-                right_eye_points = [face_landmarks.landmark[p] for p in RIGHT_EYE_INDICES]
+                left_eye_points = [face_landmarks[p] for p in LEFT_EYE_INDICES]
+                right_eye_points = [face_landmarks[p] for p in RIGHT_EYE_INDICES]
                 
                 left_ear = compute_ear(left_eye_points, w, h)
                 right_ear = compute_ear(right_eye_points, w, h)
