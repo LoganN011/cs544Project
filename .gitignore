@@ -213,5 +213,4 @@ __marimo__/
 
 # Local model files and data
 *.task
-*.pickle
 trainer.yml
