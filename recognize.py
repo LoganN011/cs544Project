@@ -3,8 +3,16 @@ import pickle
 import numpy as np
 import torch
 import os
+import sys
 from facenet_pytorch import MTCNN, InceptionResnetV1
 from liveness import LivenessDetector
+
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def recognize_users():
     if not os.path.exists('encodings.pickle'):
@@ -20,7 +28,16 @@ def recognize_users():
 
     # Model for live parsing. keep_all=True detects all faces in frame
     mtcnn = MTCNN(image_size=160, margin=0, keep_all=True, device=device)
-    resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+    
+    resnet = InceptionResnetV1(pretrained=None).eval()
+    weights_path = get_resource_path(os.path.join('models', 'vggface2.pt'))
+    
+    # Strip logits if they exist so it matches the expected model architecture
+    state_dict = torch.load(weights_path, map_location=device)
+    state_dict = {k: v for k, v in state_dict.items() if 'logits' not in k}
+    
+    resnet.load_state_dict(state_dict)
+    resnet = resnet.to(device)
     
     liveness = LivenessDetector(ear_threshold=0.20, frames_to_blink=2)
 

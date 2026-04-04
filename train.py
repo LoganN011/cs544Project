@@ -3,7 +3,15 @@ import cv2
 import numpy as np
 import pickle
 import torch
+import sys
 from facenet_pytorch import MTCNN, InceptionResnetV1
+
+def get_resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 def train_model(data_dir='data', output_file='encodings.pickle'):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -12,7 +20,15 @@ def train_model(data_dir='data', output_file='encodings.pickle'):
     # MTCNN for face cropping
     mtcnn = MTCNN(image_size=160, margin=0, keep_all=False, device=device)
     # InceptionResnetV1 for 512-d embeddings
-    resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+    resnet = InceptionResnetV1(pretrained=None).eval()
+    weights_path = get_resource_path(os.path.join('models', 'vggface2.pt'))
+    
+    # Strip logits if they exist so it matches the expected model architecture
+    state_dict = torch.load(weights_path, map_location=device)
+    state_dict = {k: v for k, v in state_dict.items() if 'logits' not in k}
+    
+    resnet.load_state_dict(state_dict)
+    resnet = resnet.to(device)
 
     user_encodings = {}
 
