@@ -76,7 +76,16 @@ class RecognitionClient:
             print(f"Error connecting to server: {e}")
 
     def retrieve(self):
-        print("Retrieving password. Please look at the camera and BLINK for liveness verification.")
+        print("Requesting challenge from server...")
+        challenge = "blink"
+        try:
+            resp = requests.get(f"{self.server_url}/challenge")
+            if resp.status_code == 200:
+                challenge = resp.json().get('challenge', 'blink')
+        except Exception as e:
+            print(f"Could not get challenge, retreating to default. {e}")
+            
+        print(f"Retrieving password. Liveness Challenge: {challenge.upper()}.")
         self.liveness.reset()
         cap = cv2.VideoCapture(0)
         if not cap.isOpened():
@@ -90,14 +99,16 @@ class RecognitionClient:
             if not ret:
                 break
 
-            is_live, ear = self.liveness.process_frame(frame)
+            is_live, message = self.liveness.process_frame(frame, challenge=challenge)
             
             color = (0, 0, 255) if not is_live else (0, 255, 0)
-            status_text = "PLEASE BLINK" if not is_live else "VERIFIED - SENDING..."
+            status_text = f"CHALLENGE: {challenge.replace('_', ' ').upper()}" if not is_live else "VERIFIED - SENDING..."
+            if message and "SPOOF" in str(message):
+                status_text = "SPOOF DETECTED"
             
             cv2.putText(frame, status_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-            if ear:
-                cv2.putText(frame, f"EAR: {ear:.2f}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+            if message:
+                cv2.putText(frame, str(message), (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
                 
             cv2.imshow('Retrieval - Liveness Check', frame)
 

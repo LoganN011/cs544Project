@@ -41,6 +41,12 @@ if os.path.exists(ENCODINGS_FILE):
 else:
     user_encodings = {}
 
+@app.route('/challenge', methods=['GET'])
+def get_challenge():
+    import random
+    challenges = ['smile', 'turn_left', 'turn_right', 'look_up', 'blink']
+    return jsonify({"status": "success", "challenge": random.choice(challenges)})
+
 @app.route('/enroll', methods=['POST'])
 def enroll():
     data = request.form
