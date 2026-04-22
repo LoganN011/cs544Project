@@ -28,7 +28,7 @@ class LivenessDetector:
     def __init__(self, ear_threshold=0.20, frames_to_blink=2):
         self.ear_threshold = ear_threshold
         self.frames_to_blink = frames_to_blink
-        self.moire_detector = MoireDetector(threshold=190)
+        self.moire_detector = MoireDetector(threshold=200) # need to update to work
         
         from mediapipe.tasks import python
         from mediapipe.tasks.python import vision

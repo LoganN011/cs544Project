@@ -216,3 +216,5 @@ __marimo__/
 trainer.yml
 
 models/
+/encodings.pickle
+passwords.db
