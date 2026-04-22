@@ -6,40 +6,35 @@ A secure, facial-recognition-based password manager using deep learning (FaceNet
 
 ---
 
-## Installation
+## Getting Started
 
-Run the following single command to install all necessary dependencies:
+The system is divided into two parts: the Server (Dockerized for cross-platform compatibility) and the Client (run natively to access your webcam).
 
+### 1. Start the Server (Docker)
+Since installing deep learning dependencies can be tricky across different computers, the server runs in Docker.
+
+**Prerequisites:** Ensure you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running on your system.
+
+In your terminal, run:
 ```bash
-pip install flask cryptography requests facenet-pytorch torch torchvision mediapipe opencv-python
+docker compose up --build
+```
+*The server will handle facial embedding generation, encrypted storage, and matching on `http://localhost:5000`. Thanks to Docker volumes, your passwords and encodings will persist in the project folder.*
+
+### 2. Start the Client (Local)
+In a **second terminal window**, set up and run the client natively to seamlessly access your webcam.
+
+**Install Client Dependencies:**
+```bash
+pip install -r requirements-client.txt
 ```
 
----
-
-## How to Run
-
-The system requires two separate terminal windows to be running simultaneously on the same machine (or on the same network).
-
-### 1. Start the Server
-In the first terminal, run:
-```bash
-python server.py
-```
-```bash
-.venv\Scripts\python.exe server.py
-```
-*The server handles facial embedding generation, encrypted storage, and matching.*
-
-### 2. Start the Client
-In a second terminal, run:
+**Run the Client:**
 ```bash
 python client.py
 ```
-```bash
-.venv\Scripts\python.exe client.py
-```
+*(If you are using a virtual environment, activate it first or use `.venv\Scripts\python.exe client.py`)*
 *The client handles camera capture, liveness detection (blinking), and the user interface.*
-
 ---
 
 ## Key Features
