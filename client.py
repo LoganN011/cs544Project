@@ -33,6 +33,9 @@ class RecognitionClient:
             ret, frame = cap.read()
             if not ret:
                 break
+            
+            # Flip frame horizontally to act like a mirror
+            frame = cv2.flip(frame, 1)
 
             # Convert to grayscale for faster face detection
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -98,6 +101,8 @@ class RecognitionClient:
             ret, frame = cap.read()
             if not ret:
                 break
+            
+            frame = cv2.flip(frame, 1)
 
             is_live, message = self.liveness.process_frame(frame, challenge=challenge)
             
